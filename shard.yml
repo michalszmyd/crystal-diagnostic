@@ -1,0 +1,13 @@
+name: crystal-diagnostic
+version: 0.1.0
+
+authors:
+  - Michal Szmyd <michal.szmyd@icloud.com>
+
+targets:
+  crystal-diagnostic:
+    main: src/crystal-diagnostic.cr
+
+crystal: '>= 1.22.3'
+
+license: MIT
