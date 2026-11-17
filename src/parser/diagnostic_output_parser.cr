@@ -47,7 +47,7 @@ module Parser
     def chunk_to_error(chunk : Chunk)
       if chunk.type.error?
         ErrorLine.new(
-          line: chunk.line_number,
+          line: chunk.line_number + 1,
           column: chunk.column_number,
           info: chunk.chunk_message,
         )

@@ -2,6 +2,9 @@ require "yaml"
 
 module Files
   class FileChecker
+    WORK_ON_CLONED_FILE = true
+    CLONED_SHARD_PATH = "tmp/project/shard.yml"
+
     @clone_path : String?
 
     property save_file_params : Lsp::SaveFileParams
@@ -18,22 +21,36 @@ module Files
     def check
       return if file_path.includes?("tmp")
 
-      STDERR.puts("file_path: #{file_path.inspect}")
-      STDERR.puts("entry_point_path: #{entry_point_path.inspect}")
-      STDERR.puts("clone_path: #{clone_path.inspect}")
-
       Process.run(
         "cp",
         [file_path, clone_path]
       )
 
-      File.open(clone_path, "w") do |file|
-        file.puts("require \"#{entry_point_path}\"")
-        file.puts(save_file_params.text)
-      end
+      header = "require \"#{entry_point_path}\""
+      body = save_file_params.text
 
-      output = Files::Compiler.new(file_path: clone_path).compile
-      errors = Parser::DiagnosticOutputParser.new(output).to_errors
+      errors = if CLONED_SHARD_PATH
+        collector = nil
+
+        FileDump.new(
+          body: body,
+          header: header,
+          origin_path: clone_path
+        ).dump do |path|
+          output = Files::Compiler.new(file_path: path).compile
+          collector = Parser::DiagnosticOutputParser.new(output).to_errors
+        end
+
+        collector
+      else
+        File.open(clone_path, "w") do |file|
+          file.puts(header)
+          file.puts(body)
+        end
+
+        output = Files::Compiler.new(file_path: clone_path).compile
+        Parser::DiagnosticOutputParser.new(output).to_errors
+      end
 
       errors
     end
@@ -56,11 +73,12 @@ module Files
     end
 
     def entry_point
-      yaml = File.open("tmp/project/shard.yml") do |file|
+      yaml = File.open(CLONED_SHARD_PATH) do |file|
         YAML.parse(file)
       end
 
-      yaml["targets"][project_attributes.project_name]["main"].as_s?
+      targets = yaml["targets"]
+      (targets.dig?(project_attributes.project_name) || targets[targets.as_h.keys.first]).dig?("main")
     end
   end
 end
