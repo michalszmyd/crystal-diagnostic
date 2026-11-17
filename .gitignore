@@ -3,3 +3,7 @@
 /bin/
 /.shards/
 *.dwarf
+.zed
+tmp
+crystal-lsp
+src/tester.cr

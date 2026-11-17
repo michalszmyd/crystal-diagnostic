@@ -1,8 +1,8 @@
-name: crystal-diagnostic
+name: diagnostic
 version: 0.1.0
 
 authors:
-  - Michal Szmyd <michal.szmyd@icloud.com>
+  - Michal Szmyd <michal.szmyd>
 
 targets:
   crystal-diagnostic:
